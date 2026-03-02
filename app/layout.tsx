@@ -51,6 +51,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                                     <a href="/soluciones" className="text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors">
                                         Soluciones
                                     </a>
+                                    <a href="/proyectos" className="text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors">
+                                        Proyectos
+                                    </a>
                                     <a href="/contacto" className="text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors">
                                         Contacto
                                     </a>
@@ -72,6 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                             </div>
                             <div className="flex gap-6 text-sm">
                                 <a href="/soluciones" className="hover:underline">Soluciones</a>
+                                <a href="/proyectos" className="hover:underline">Proyectos</a>
                                 <a href="/contacto" className="hover:underline">Contacto</a>
                             </div>
                         </div>

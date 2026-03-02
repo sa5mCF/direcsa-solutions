@@ -280,11 +280,19 @@ export default function SolutionsPage() {
                         {[
                             {
                                 q: "¿Realizan envíos y trabajos fuera de la CDMX?",
-                                a: "Sí, contamos con cobertura y realizamos envíos de equipo y proyectos de integración en todo México."
+                                a: "Sí. En Direcsa contamos con cobertura en toda la República Mexicana. Realizamos envíos de equipo, proyectos de integración e instalación en diferentes estados, garantizando la misma calidad y seguimiento en cada proyecto."
                             },
                             {
                                 q: "¿Qué tipo de garantías ofrecen?",
-                                a: "Ofrecemos total tranquilidad: contamos con pólizas de garantía directa con las marcas líderes y esquemas de mantenimiento preventivo extendidos hasta por 5 años."
+                                a: "Todos los equipos cuentan con garantía directa del fabricante conforme a sus políticas. Adicionalmente, ofrecemos planes de mantenimiento preventivo para asegurar el óptimo funcionamiento del sistema y prolongar la vida útil del equipo."
+                            },
+                            {
+                                q: "¿Cómo es el proceso para iniciar un proyecto?",
+                                a: "El proceso comienza con una visita o reunión para conocer las necesidades del espacio. Posteriormente, desarrollamos una propuesta técnica y económica personalizada. Una vez aprobada, coordinamos la instalación y puesta en marcha del sistema."
+                            },
+                            {
+                                q: "¿Cuánto cuesta un proyecto de audio o video?",
+                                a: "Cada proyecto es diferente, ya que depende del tamaño del espacio, las necesidades técnicas y el nivel de integración requerido. En Direcsa realizamos un diagnóstico previo para ofrecer una propuesta personalizada, clara y ajustada a cada presupuesto."
                             }
                         ].map((faq, idx) => (
                             <div key={idx} className="bg-gray-800/50 p-8 rounded-3xl border border-white/5 backdrop-blur-sm">
