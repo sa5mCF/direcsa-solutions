@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
-import { getQuoteController } from '@/lib/container';
+import { quoteController } from '@/src/modules/quote/quote.controller';
 
 export async function GET(req: NextRequest) {
-    return getQuoteController().getAll(req);
+    return quoteController.getAll(req);
 }
 
 export async function POST(req: NextRequest) {
-    return getQuoteController().create(req);
+    return quoteController.create(req);
 }

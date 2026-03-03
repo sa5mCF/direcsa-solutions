@@ -24,7 +24,7 @@ interface Product {
     id: string;
     name: string;
     sku: string;
-    price: number;
+    priceMxn: number;
     unit: string;
 }
 
@@ -76,7 +76,7 @@ export default function DashboardQuotesPage() {
         const updated = [...items];
         if (field === 'productId') {
             const product = products.find((p) => p.id === value);
-            updated[index] = { ...updated[index], productId: String(value), unitPrice: product?.price ?? 0 };
+            updated[index] = { ...updated[index], productId: String(value), unitPrice: product?.priceMxn ?? 0 };
         } else {
             updated[index] = { ...updated[index], [field]: value };
         }

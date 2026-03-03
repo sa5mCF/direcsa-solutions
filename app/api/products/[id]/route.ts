@@ -1,17 +1,17 @@
 import { NextRequest } from 'next/server';
-import { getProductController } from '@/lib/container';
+import { productController } from '@/src/modules/product/product.controller';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    return getProductController().getById(req, id);
+    return productController.getById(req, id);
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    return getProductController().update(req, id);
+    return productController.update(req, id);
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    return getProductController().delete(req, id);
+    return productController.delete(req, id);
 }

@@ -1,20 +1,18 @@
 import { NextRequest } from 'next/server';
-import { getAuthController } from '@/lib/container';
+import { authController } from '@/src/modules/auth/auth.controller';
 
 export async function POST(req: NextRequest) {
     const body = await req.clone().json().catch(() => ({}));
     const action = body?.action;
 
-    const controller = getAuthController();
-
     if (action === 'register') {
-        return controller.register(req);
+        return authController.register(req);
     }
     if (action === 'login') {
-        return controller.login(req);
+        return authController.login(req);
     }
     if (action === 'logout') {
-        return controller.logout(req);
+        return authController.logout(req);
     }
 
     return Response.json({ error: 'Acción no válida. Usa: register, login, logout' }, { status: 400 });

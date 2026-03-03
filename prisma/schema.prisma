@@ -10,9 +10,89 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
+enum UserType {
   ADMIN
   BUYER
+}
+
+enum PermissionType {
+  CREATE_ADMIN
+  MANAGE_PRODUCTS
+  VIEW_QUOTES
+  DELETE_MESSAGES
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash String   @map("password_hash")
+  userType     UserType @default(BUYER) @map("user_type")
+
+  // Audit fields
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
+
+  buyer_profile    BuyerProfile?
+  user_permissions UserPermission[]
+  quotes           Quote[]
+
+ 
+}
+
+model BuyerProfile {
+  id         String  @id @default(cuid())
+  phone      String?
+  company    String?
+  address    String?
+  vatNumber String? @map("vat_number") // RFC u otro identificador fiscal
+
+  userId String @unique @map("user_id")
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Audit fields
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
+}
+
+model LuPermission {
+  id   String         @id @default(cuid())
+  type PermissionType @unique
+  name String         @default("")
+
+  user_permissions UserPermission[]
+
+  // Audit fields
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
+}
+
+model UserPermission {
+  id String     @id @default(cuid())
+  userId       String @map("user_id")
+  permissionId String @map("permission_id")
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission    LuPermission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  // Audit fields
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
 }
 
 enum QuoteStatus {
@@ -22,64 +102,124 @@ enum QuoteStatus {
   REJECTED
 }
 
-model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(BUYER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  parentId  String? @map("parent_id")
+  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
 
-  quotes Quote[]
+  products Product[]
+
+  // Audit fields
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
+}
+
+model Brand {
+  id   String @id @default(uuid())
+  name String
+
+  products Product[]
+
+  // Audit fields
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   description String?
-  sku         String   @unique
-  price       Float
-  unit        String   @default("pza")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  sku         String  @unique
+  unit        String  @default("pza")
 
-  quoteItems QuoteItem[]
+  // Pricing fields
+  dealerPriceUsd  Decimal @default(0) @map("dealer_price_usd")
+  promoPriceUsd   Decimal @default(0) @map("promo_price_usd")
+  priceMxnExVat  Decimal @default(0) @map("price_mxn_ex_vat")
+  priceMxnIncVat Decimal @default(0) @map("price_mxn_inc_vat")
+  priceMxn         Decimal @default(0) @map("price_mxn")
+  priceUsd         Decimal @default(0) @map("price_usd")
+  discount          Decimal @default(0)
+
+  brandId    String @map("brand_id")
+  brand       Brand    @relation(fields: [brandId], references: [id])
+  categoryId String @map("category_id")
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  // Audit fields
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
+
+  quoteItems QuoteItem[] @relation("ProductQuoteItems")
 }
 
 model Quote {
-  id        String      @id @default(cuid())
-  status    QuoteStatus @default(PENDING)
-  notes     String?
-  total     Float       @default(0)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id     String      @id @default(cuid())
+  status QuoteStatus @default(PENDING)
+  notes  String?
+  total  Decimal       @default(0)
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+  user    User   @relation(fields: [userId], references: [id])
 
-  items QuoteItem[]
+  // Audit fields
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
+  items QuoteItem[] @relation("QuoteQuoteItems")
 }
 
 model QuoteItem {
   id        String @id @default(cuid())
   quantity  Int
-  unitPrice Float
-  subtotal  Float
+  unitPrice Decimal @default(0) @map("unit_price")
+  subtotal   Decimal @default(0)
 
-  quoteId String
-  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quoteId String @map("quote_id")
+  quote    Quote  @relation("QuoteQuoteItems", fields: [quoteId], references: [id], onDelete: Cascade)
 
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
+  productId String @map("product_id")
+  product    Product @relation("ProductQuoteItems", fields: [productId], references: [id])
+
+  // Audit fields
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
 }
 
 model ContactMessage {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   email       String
   phone       String?
   description String
-  createdAt   DateTime @default(now())
+  isRead     Boolean @default(false) @map("is_read")
+
+  // Audit fields
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+
 }

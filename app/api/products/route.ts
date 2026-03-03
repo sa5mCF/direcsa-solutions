@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
-import { getProductController } from '@/lib/container';
+import { productController } from '@/src/modules/product/product.controller';
 
 export async function GET(req: NextRequest) {
-    return getProductController().getAll(req);
+    return productController.getAll(req);
 }
 
 export async function POST(req: NextRequest) {
-    return getProductController().create(req);
+    return productController.create(req);
 }

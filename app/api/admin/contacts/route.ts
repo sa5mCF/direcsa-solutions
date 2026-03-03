@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
-import { getContactController } from '@/lib/container';
+import { contactController } from '@/src/modules/contact/contact.controller';
 
 export async function GET(req: NextRequest) {
-    const controller = getContactController();
-    return await controller.getAll(req);
+    return await contactController.findAll(req);
 }

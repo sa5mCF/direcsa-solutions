@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from './src/infrastructure/auth/jwt';
+import { verifyToken } from '@/src/lib/auth/jwt';
 
 const PROTECTED_PATHS = [
     '/dashboard',
