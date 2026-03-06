@@ -13,6 +13,13 @@ export class ContactService {
             orderBy: { createdAt: 'desc' },
         });
     }
+
+    async update(id: string, data: Prisma.ContactMessageUncheckedUpdateInput) {
+        return prisma.contactMessage.update({
+            where: { id },
+            data,
+        });
+    }
 }
 
 export const contactService = new ContactService();

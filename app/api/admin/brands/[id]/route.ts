@@ -1,0 +1,12 @@
+import { NextRequest } from 'next/server';
+import { brandController } from '@/src/modules/brand/brand.controller';
+
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    return brandController.update(req, id);
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    return brandController.delete(req, id);
+}
