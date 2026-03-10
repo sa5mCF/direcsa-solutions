@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ProductForm } from '@/src/modules/product/components/ProductForm';
 import { BrandForm } from '@/src/modules/product/components/BrandForm';
 import { CategoryForm } from '@/src/modules/product/components/CategoryForm';
+import { AdminForm } from '@/src/modules/admin/components/AdminForm';
 
 interface ContactMessage {
     id: string;
@@ -38,7 +39,15 @@ interface Category {
     parentId?: string | null;
 }
 
-type Tab = 'contacts' | 'products' | 'brands' | 'categories';
+interface Admin {
+    id: string;
+    name: string;
+    email: string;
+    isActive: boolean;
+    createdAt: string;
+}
+
+type Tab = 'contacts' | 'products' | 'brands' | 'categories' | 'admins';
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -47,11 +56,13 @@ export default function AdminDashboard() {
     const [products, setProducts] = useState<Product[]>([]);
     const [brands, setBrands] = useState<Brand[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
+    const [admins, setAdmins] = useState<Admin[]>([]);
+    const [permissions, setPermissions] = useState<string[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const [showModal, setShowModal] = useState<'product' | 'brand' | 'category' | null>(null);
+    const [showModal, setShowModal] = useState<'product' | 'brand' | 'category' | 'admin' | null>(null);
     const [selectedItem, setSelectedItem] = useState<any>(null);
 
     const fetchData = useCallback(async () => {
@@ -79,6 +90,11 @@ export default function AdminDashboard() {
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
                 setCategories(data.categories);
+            } else if (activeTab === 'admins') {
+                res = await fetch('/api/admin/admins');
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                setAdmins(data.admins);
             }
 
             // Always fetch brands and categories if they are empty (for forms)
@@ -103,6 +119,22 @@ export default function AdminDashboard() {
         }
     }, [activeTab, router]);
 
+    const fetchPermissions = useCallback(async () => {
+        try {
+            const res = await fetch('/api/admin/me');
+            const data = await res.json();
+            if (res.ok) {
+                setPermissions(data.permissions || []);
+            }
+        } catch (err) {
+            console.error('Error fetching permissions:', err);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchPermissions();
+    }, [fetchPermissions]);
+
     useEffect(() => {
         fetchData();
     }, [fetchData]);
@@ -120,12 +152,12 @@ export default function AdminDashboard() {
         }
     }
 
-    const openCreate = (type: 'product' | 'brand' | 'category') => {
+    const openCreate = (type: 'product' | 'brand' | 'category' | 'admin') => {
         setSelectedItem(null);
         setShowModal(type);
     };
 
-    const openEdit = (type: 'product' | 'brand' | 'category', item: any) => {
+    const openEdit = (type: 'product' | 'brand' | 'category' | 'admin', item: any) => {
         setSelectedItem(item);
         setShowModal(type);
     };
@@ -157,6 +189,48 @@ export default function AdminDashboard() {
             fetchData();
         } catch (err: any) {
             alert(err.message);
+        }
+    };
+
+    const handleImageUpload = async (id: string, type: 'product' | 'brand', e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setLoading(true);
+        try {
+            // 1. Upload to S3
+            const { uploadImage } = await import('@/src/lib/uploadImage');
+            const uploadRes = await uploadImage(file, type);
+
+            // 2. Update via PUT (Partial)
+            const payload = type === 'product' ? {
+                imageOriginal: uploadRes.originalUrl,
+                imageOptimized: uploadRes.optimizedUrl,
+                imageThumbnail: uploadRes.thumbnailUrl,
+            } : {
+                logoOriginal: uploadRes.originalUrl,
+                logoOptimized: uploadRes.optimizedUrl,
+                logoThumbnail: uploadRes.thumbnailUrl,
+            };
+
+            const res = await fetch(`/api/admin/${type === 'product' ? 'products' : 'brands'}/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Error al actualizar registro');
+            }
+
+            alert('¡Imagen actualizada con éxito!');
+            fetchData();
+        } catch (err: any) {
+            alert(err.message || 'Error durante la subida');
+        } finally {
+            setLoading(false);
+            e.target.value = ''; // Reset input
         }
     };
 
@@ -203,6 +277,19 @@ export default function AdminDashboard() {
                                 {tab.label}
                             </button>
                         ))}
+
+                        {permissions.includes('CREATE_ADMIN') && (
+                            <button
+                                onClick={() => setActiveTab('admins')}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'admins'
+                                    ? 'bg-blue-50 text-blue-600 shadow-sm'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                                    }`}
+                            >
+                                <span className="text-lg">🛡️</span>
+                                Administradores
+                            </button>
+                        )}
                     </nav>
                 </aside>
 
@@ -219,17 +306,22 @@ export default function AdminDashboard() {
                                     {activeTab === 'products' && 'Catálogo completo de productos'}
                                     {activeTab === 'brands' && 'Gestión de marcas registradas'}
                                     {activeTab === 'categories' && 'Estructura de categorías'}
+                                    {activeTab === 'admins' && 'Gestión de cuentas administrativas'}
                                 </p>
                             </div>
                             {activeTab !== 'contacts' && (
                                 <button
                                     onClick={() => {
-                                        const type = activeTab === 'categories' ? 'category' : activeTab.slice(0, -1) as any;
+                                        const type = activeTab === 'categories'
+                                            ? 'category'
+                                            : activeTab === 'admins'
+                                                ? 'admin'
+                                                : activeTab.slice(0, -1) as any;
                                         openCreate(type);
                                     }}
                                     className="bg-slate-900 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-gray-200 flex items-center gap-2"
                                 >
-                                    <span>+</span> Nuevo {activeTab === 'categories' ? 'categoría' : activeTab.slice(0, -1)}
+                                    <span>+</span> Nuevo {activeTab === 'categories' ? 'categoría' : activeTab === 'admins' ? 'administrador' : activeTab.slice(0, -1)}
                                 </button>
                             )}
                         </div>
@@ -325,11 +417,26 @@ export default function AdminDashboard() {
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
                                                             <div className="flex justify-end gap-2">
-                                                                <button onClick={() => openEdit('product', p)} className="text-blue-600 font-bold hover:underline px-2">Editar</button>
-                                                                <button onClick={() => handleDelete('products', p.id)} className="text-red-500 font-bold hover:underline px-2">Borrar</button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
+                                                                    <div className="relative">
+                                                                        <input
+                                                                            type="file"
+                                                                            className="hidden"
+                                                                            id={`upload-product-${p.id}`}
+                                                                            accept="image/*"
+                                                                            onChange={(e) => handleImageUpload(p.id, 'product', e)}
+                                                                        />
+                                                                        <button
+                                                                            onClick={() => document.getElementById(`upload-product-${p.id}`)?.click()}
+                                                                            className="text-emerald-600 font-bold hover:underline px-2 flex items-center gap-1"
+                                                                        >
+                                                                            <span>📷</span> Subir
+                                                                        </button>
+                                                                    </div>
+                                                                    <button onClick={() => openEdit('product', p)} className="text-blue-600 font-bold hover:underline px-2">Editar</button>
+                                                                    <button onClick={() => handleDelete('products', p.id)} className="text-red-500 font-bold hover:underline px-2">Borrar</button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
                                                 ))}
                                             </tbody>
                                         </table>
@@ -342,6 +449,21 @@ export default function AdminDashboard() {
                                             <div key={b.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center group">
                                                 <span className="font-bold text-gray-900">{b.name}</span>
                                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div>
+                                                        <input
+                                                            type="file"
+                                                            className="hidden"
+                                                            id={`upload-brand-${b.id}`}
+                                                            accept="image/*"
+                                                            onChange={(e) => handleImageUpload(b.id, 'brand', e)}
+                                                        />
+                                                        <button
+                                                            onClick={() => document.getElementById(`upload-brand-${b.id}`)?.click()}
+                                                            className="text-xs font-bold text-emerald-600 hover:underline"
+                                                        >
+                                                            Subir Logo
+                                                        </button>
+                                                    </div>
                                                     <button onClick={() => openEdit('brand', b)} className="text-xs font-bold text-blue-600 hover:underline">Editar</button>
                                                     <button onClick={() => handleDelete('brands', b.id)} className="text-xs font-bold text-red-500 hover:underline">Borrar</button>
                                                 </div>
@@ -364,6 +486,37 @@ export default function AdminDashboard() {
                                                 </div>
                                             </div>
                                         ))}
+                                    </div>
+                                )}
+
+                                {activeTab === 'admins' && (
+                                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                                        <table className="w-full text-left text-sm">
+                                            <thead className="bg-gray-50 border-b border-gray-100">
+                                                <tr>
+                                                    <th className="px-6 py-4 font-bold text-gray-600">Nombre</th>
+                                                    <th className="px-6 py-4 font-bold text-gray-600">Email</th>
+                                                    <th className="px-6 py-4 font-bold text-gray-600">Fecha Registro</th>
+                                                    <th className="px-6 py-4 font-bold text-gray-600 text-right">Estado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {admins?.map((admin) => (
+                                                    <tr key={admin.id} className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-6 py-4 font-bold text-gray-900">{admin.name}</td>
+                                                        <td className="px-6 py-4 text-gray-500">{admin.email}</td>
+                                                        <td className="px-6 py-4 text-gray-400">
+                                                            {new Date(admin.createdAt).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${admin.isActive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                                                {admin.isActive ? 'Activo' : 'Inactivo'}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 )}
                             </div>
@@ -391,6 +544,9 @@ export default function AdminDashboard() {
                         )}
                         {showModal === 'product' && (
                             <ProductForm product={selectedItem} brands={brands} categories={categories} onSuccess={handleSuccess} onCancel={() => setShowModal(null)} />
+                        )}
+                        {showModal === 'admin' && (
+                            <AdminForm onSuccess={handleSuccess} onCancel={() => setShowModal(null)} />
                         )}
                     </div>
                 </div>

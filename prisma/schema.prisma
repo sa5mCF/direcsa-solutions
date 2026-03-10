@@ -124,6 +124,10 @@ model Brand {
   id   String @id @default(uuid())
   name String
 
+  logoOriginal  String? @map("logo_original")
+  logoOptimized String? @map("logo_optimized")
+  logoThumbnail String? @map("logo_thumbnail")
+
   products Product[]
 
   // Audit fields
@@ -141,6 +145,11 @@ model Product {
   description String?
   sku         String  @unique
   unit        String  @default("pza")
+
+  // Image variants
+  imageOriginal  String? @map("image_original")
+  imageOptimized String? @map("image_optimized")
+  imageThumbnail String? @map("image_thumbnail")
 
   // Pricing fields
   dealerPriceUsd  Decimal @default(0) @map("dealer_price_usd")

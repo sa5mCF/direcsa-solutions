@@ -5,6 +5,9 @@ import { z } from 'zod';
 const brandSchema = z.object({
     name: z.string().min(1, 'El nombre es requerido'),
     isActive: z.boolean().optional(),
+    logoOriginal: z.string().optional().nullable(),
+    logoOptimized: z.string().optional().nullable(),
+    logoThumbnail: z.string().optional().nullable(),
 });
 
 export class BrandController {

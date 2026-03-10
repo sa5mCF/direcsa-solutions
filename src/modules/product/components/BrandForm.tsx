@@ -5,6 +5,9 @@ import { useState } from 'react';
 interface Brand {
     id?: string;
     name: string;
+    logoOriginal?: string;
+    logoOptimized?: string;
+    logoThumbnail?: string;
 }
 
 interface BrandFormProps {
@@ -17,7 +20,6 @@ export function BrandForm({ brand, onSuccess, onCancel }: BrandFormProps) {
     const [name, setName] = useState(brand?.name || '');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setLoading(true);

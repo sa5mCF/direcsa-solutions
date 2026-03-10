@@ -27,6 +27,9 @@ interface Product {
     priceMxn: number;
     priceUsd: number;
     discount: number;
+    imageOriginal?: string;
+    imageOptimized?: string;
+    imageThumbnail?: string;
 }
 
 interface ProductFormProps {
@@ -51,13 +54,15 @@ const emptyProduct: Product = {
     priceMxn: 0,
     priceUsd: 0,
     discount: 0,
+    imageOriginal: '',
+    imageOptimized: '',
+    imageThumbnail: '',
 };
 
 export function ProductForm({ product, brands, categories, onSuccess, onCancel }: ProductFormProps) {
     const [form, setForm] = useState<Product>(product || emptyProduct);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setLoading(true);

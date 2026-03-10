@@ -17,6 +17,9 @@ const productSchema = z.object({
     brandId: z.string().min(1, 'El ID de marca es requerido'),
     categoryId: z.string().min(1, 'El ID de categoría es requerido'),
     isActive: z.boolean().optional(),
+    imageOriginal: z.string().optional().nullable(),
+    imageOptimized: z.string().optional().nullable(),
+    imageThumbnail: z.string().optional().nullable(),
 });
 
 export class ProductController {
