@@ -3,6 +3,45 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3Client, BUCKET_NAME } from "@/lib/s3";
 
+/**
+ * @swagger
+ * /api/uploads/url:
+ *   post:
+ *     summary: Generar URL pre-firmada para subir imagen a S3
+ *     description: >
+ *       Genera una URL pre-firmada de AWS S3 válida por 60 segundos.
+ *       También retorna las URLs públicas para las variantes de la imagen
+ *       (original, optimizada, thumbnail).
+ *     tags: [Uploads]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UploadUrlInput'
+ *     responses:
+ *       200:
+ *         description: URL pre-firmada generada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UploadUrlResponse'
+ *       400:
+ *         description: Faltan campos requeridos o entidad inválida
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Error al generar la URL
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function POST(request: Request) {
   try {
     const { filename, entity } = await request.json();
