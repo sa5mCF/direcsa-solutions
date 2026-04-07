@@ -3,10 +3,6 @@ import { getProductBySlug } from '@/lib/products';
 import Image from 'next/image';
 import { CheckCircle2, ChevronLeft, Zap, Ruler, ShieldCheck } from 'lucide-react';
 
-export const metadata: Metadata = {
-    title: 'Detalle de Producto — Direcsa',
-};
-
 interface ApiProduct {
     id: string;
     name: string;
@@ -15,6 +11,8 @@ interface ApiProduct {
     price: number;
     unit: string;
     isActive: boolean;
+    image?: string;
+    shortDescription?: string;
 }
 
 async function getApiProduct(id: string): Promise<ApiProduct | null> {
@@ -28,6 +26,43 @@ async function getApiProduct(id: string): Promise<ApiProduct | null> {
     } catch {
         return null;
     }
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await params;
+    const staticProduct = getProductBySlug(slug);
+    const apiProduct = !staticProduct ? await getApiProduct(slug) : null;
+    const product = staticProduct || apiProduct;
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://direcsa.com';
+
+    if (!product) {
+        return {
+            title: 'Producto no encontrado — Direcsa',
+        };
+    }
+
+    const title = `${product.name} — Direcsa`;
+    const description = ('shortDescription' in product ? product.shortDescription : product.description) || '';
+    const imageUrl = `${baseUrl}${product.image || '/images/og-default.jpg'}`;
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title,
+            description,
+            images: [{ url: imageUrl, width: 1200, height: 630 }],
+            type: 'website',
+            url: `${baseUrl}/products/${slug}`,
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [imageUrl],
+        },
+    };
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
