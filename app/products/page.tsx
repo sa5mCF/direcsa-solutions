@@ -16,7 +16,7 @@ interface Product {
 
 async function getProducts(): Promise<Product[]> {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/products?active=true`, {
+        const res = await fetch(`${process.env.BASE_URL || 'http://localhost:3000'}/api/products?active=true`, {
             cache: 'no-store',
         });
         if (!res.ok) return [];

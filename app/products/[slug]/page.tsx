@@ -17,7 +17,7 @@ interface ApiProduct {
 
 async function getApiProduct(id: string): Promise<ApiProduct | null> {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/products/${id}`, {
+        const res = await fetch(`${process.env.BASE_URL || 'http://localhost:3000'}/api/products/${id}`, {
             cache: 'no-store',
         });
         if (!res.ok) return null;
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const apiProduct = !staticProduct ? await getApiProduct(slug) : null;
     const product = staticProduct || apiProduct;
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://direcsa.com';
+    const baseUrl = process.env.BASE_URL || 'https://direcsa.com';
 
     if (!product) {
         return {

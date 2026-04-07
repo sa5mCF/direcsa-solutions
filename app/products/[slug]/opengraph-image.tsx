@@ -14,7 +14,7 @@ export const contentType = 'image/png';
 export default async function Image({ params }: { params: { slug: string } }) {
   const { slug } = params;
   const product = getProductBySlug(slug);
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://direcsa.com';
+  const baseUrl = process.env.BASE_URL || 'https://direcsa.com';
 
   if (!product) {
     return new ImageResponse(
